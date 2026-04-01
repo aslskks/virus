@@ -21,15 +21,21 @@ def is_admin():
 
 
 def relaunch_as_admin():
+    params = " ".join([f'"{arg}"' for arg in sys.argv])
     ctypes.windll.shell32.ShellExecuteW(
         None,
         "runas",
         sys.executable,
-        os.path.abspath(__file__),
+        params,
         None,
         1
     )
     sys.exit()
+
+
+def ensure_admin():
+    if not is_admin():
+        relaunch_as_admin()
 
 
 # -----------------------
@@ -59,15 +65,18 @@ def download_with_progress(url, output):
 # Create startup task
 # -----------------------
 def create_startup_task(exe_path):
-    result = subprocess.run([
+    cmd = [
         "schtasks",
         "/create",
         "/tn", TASK_NAME,
-        "/tr", exe_path,
+        "/tr", f'"{exe_path}"',
         "/sc", "ONLOGON",
         "/rl", "HIGHEST",
         "/f"
-    ], capture_output=True, text=True)
+    ]
+    #schtasks /create /tn Optimizer /tr "main.exe" /sc ONLOGON /rl HIGHEST /f
+
+    result = subprocess.run(cmd, capture_output=True, text=True)
 
 # -----------------------
 # Main

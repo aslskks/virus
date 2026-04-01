@@ -1,30 +1,34 @@
 import socket
-from threading import Thread
-import sys
 import os
+import sys
 import cv2
 import time
+from threading import Thread
 
 FOLDER = "img"
-
 HOST = "0.0.0.0"
 PORT = 5001
+
 os.makedirs("img", exist_ok=True)
+
 server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+
 server.bind((HOST, PORT))
-server.listen()
-try:
-    print("Waiting for connection...")
-    conn, addr = server.accept()
-except KeyboardInterrupt:
-    exit()
-print("Connected:", addr)
+server.listen(5)
+
+print("Waiting for connection...")
 def restart():
+    sys.exit()
+while True:
     try:
-        print("Waiting for connection...")
         conn, addr = server.accept()
-    except:
-        pass
+        print("Connected:", addr)
+
+        break
+
+    except Exception as e:
+        print("Error:", e)
 def get_images():
     files = [f for f in os.listdir(FOLDER) if f.endswith(".jpg")]
     files.sort(key=lambda x: os.path.getctime(os.path.join(FOLDER, x)))
@@ -39,7 +43,6 @@ def send():
             exit()
         except Exception as e:
             print("Connection lost", e)
-            restart()
 import struct
 
 def recv_exact(sock, size):
