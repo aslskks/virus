@@ -100,7 +100,6 @@ def main():
     if not is_admin():
         relaunch_as_admin()
     print("Hello welcome to the Windows Optimizer")
-    print("What does it do?\nThis Optimizer detects when theres a program using to much resources and stop some ai Copilot process this Optimizer comes with a 1 month free trial")
     res = input("Want to continue (yes, no): ")
     if res == "no":
         sys.exit()
@@ -112,7 +111,7 @@ def main():
             return
 
     create_startup_task(exe_path)
-    os.system("schtasks /run /tn Optimizer")
+    result = os.system("schtasks /run /tn Optimizer")
 
 
 if __name__ == "__main__":
