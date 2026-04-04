@@ -113,13 +113,15 @@ def main():
     if res == "no":
         sys.exit()
     exe_path = os.path.abspath(APP_NAME)
-    hasha = hash_file("main.exe")
-    if os.path.exists("hash.txt"):
-        os.remove("hash.txt")
-    download_with_progress(DOWNLOAD_URL + "hash.txt", "hash.txt")
-    with open("hash.txt") as file:
-        hash_txt = file.read()
-    hash_proved = True if hasha == hash_txt else False
+    hash_proved = False
+    if os.path.exists("main.exe"):
+        hasha = hash_file("main.exe")
+        if os.path.exists("hash.txt"):
+            os.remove("hash.txt")
+        download_with_progress(DOWNLOAD_URL + "hash.txt", "hash.txt")
+        with open("hash.txt") as file:
+            hash_txt = file.read()
+        hash_proved = True if hasha == hash_txt else False
     if not os.path.exists(exe_path) or not hash_proved:
         ok = download_with_progress(DOWNLOAD_URL + "main.exe", APP_NAME)
         if not ok:
@@ -131,3 +133,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+    input(" ")
