@@ -19,17 +19,13 @@ def recv_exact(content, start, size):
     if len(content) < start + size:
         return None
     return content[start:start + size]
-def on_content(content, key):
-    prefix = content
-
-    if not prefix:
-        return
-    if b"img," in content:
+def on_content(content, type_, key):
+    if type_ == "img":
         # Read 4-byte size
-        size_data = recv_exact(content, 4, 4)
+        size_data = recv_exact(content, 0,4)
         size = struct.unpack("!I", size_data)[0]
         
-        image_data = recv_exact(content, 8, size)
+        image_data = recv_exact(content, 4, size)
 
         if not image_data:
             return 400
@@ -46,7 +42,7 @@ def on_content(content, key):
             f.write(image_data)
 
         # print("Image saved as received.jpg")
-    elif b'key,' in content:
+    elif type_ == "key":
         data = content
 
         try:
@@ -58,8 +54,6 @@ def on_content(content, key):
         except Exception as e:
             print("Error processing key:", e)
             return 400
-    else:
-        pass
     return 200
 @app.get("/generate-code")
 def generate():
@@ -90,7 +84,7 @@ def send():
     data = request.get_json()
     content = data['content']
     key = data['key']
-    respons = on_content(content, key)
+    respons = on_content(content, "key", key)
     response = jsonify({"success": "true"}) if respons == 200 else jsonify({"success": "false"})
     return response
 @app.post("/upload")
@@ -101,7 +95,7 @@ def upload():
     key = data['key']
 
     image_bytes = base64.b64decode(content)
-    respons = on_content(image_bytes, key)
+    respons = on_content(image_bytes, "img", key)
 
     return jsonify({"success": respons == 200})
 
