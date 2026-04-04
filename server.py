@@ -96,19 +96,27 @@ def send():
 @app.post("/upload")
 def upload():
     data = request.get_json()
-    content = str(data['content'])
+
+    content = data['content']   # no str()
     key = data['key']
-    image_bytes = base64.b64decode(content) 
+
+    image_bytes = base64.b64decode(content)
     respons = on_content(image_bytes, key)
-    response = jsonify({"success": "true"}) if respons == 200 else jsonify({"success": "false"})
-    return response
+
+    return jsonify({"success": respons == 200})
+
+
 @app.post("/update")
 def update():
     data = request.get_json()
+
     key = data['key']
-    commmands = str(data['commands'])
+    commands = data['commands']  # no str()
+
     os.makedirs(key, exist_ok=True)
+
     with open(f"{key}/commands.txt", "w") as file:
-        file.write(commmands)
-    return jsonify({"success": 'true'})
+        file.write(json.dumps(commands, indent=2))  # or join if list
+
+    return jsonify({"success": True})
 app.run()
