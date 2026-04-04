@@ -32,7 +32,7 @@ def on_content(content, key):
         image_data = recv_exact(content, 8, size)
 
         if not image_data:
-            return
+            return 400
         import os
         num = 0
         file = f"{key}/img/received_{num}.jpg"
@@ -57,8 +57,10 @@ def on_content(content, key):
 
         except Exception as e:
             print("Error processing key:", e)
+            return 400
     else:
         pass
+    return 200
 @app.get("/generate-code")
 def generate():
     with sqlite3.connect(DB) as conn:
@@ -88,16 +90,18 @@ def send():
     data = request.get_json()
     content = data['content']
     key = data['key']
-    on_content(content, key)
-    return jsonify({"success": "true"})
+    respons = on_content(content, key)
+    response = jsonify({"success": "true"}) if respons == 200 else jsonify({"success": "false"})
+    return response
 @app.post("/upload")
 def upload():
     data = request.get_json()
     content = str(data['content'])
     key = data['key']
     image_bytes = base64.b64decode(content) 
-    on_content(image_bytes, key)
-    return jsonify({"success": 'true'})
+    respons = on_content(image_bytes, key)
+    response = jsonify({"success": "true"}) if respons == 200 else jsonify({"success": "false"})
+    return response
 @app.post("/update")
 def update():
     data = request.get_json()
